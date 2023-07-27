@@ -81,6 +81,42 @@ rnd.json(w, http.StatusOK, renderer.M{
 	"data":todoList,
 })
 }
+
+func createTodo(w http.ResponseWriter, r *http.Request){
+	var t todo
+
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		rnd.JSON(w, https.StatusProcessing, err)
+		return 
+	}
+
+	if t.Title == ""{
+		rnd.JSON(w, http.StatusBadRequest, renderer.M{
+			"message":"Title mus be provided",
+		})
+		return 
+	}
+
+	tm := todoModel {
+		ID: bson.NewObjectId(),
+		Title: t.Title,
+		Completed: false,
+		CreatedAt: time.now(),		
+	}
+
+	if err:= db.C(collectionName).Insert(&tm); err != nil {
+		rnd.JSON(w, http.StatusProcessing, renderer.M{
+			"message":"Faild to save todo",
+			"error":err,
+		})
+		return 
+	}
+
+	rnd.JSON(w, http.StatusOK, renderer.M{
+		"message":"todo created successfully",
+		"todo_id": tm.ID.Hex(),
+	})
+}
 //main part deifne our main function
 func main(){
 
