@@ -117,6 +117,64 @@ func createTodo(w http.ResponseWriter, r *http.Request){
 		"todo_id": tm.ID.Hex(),
 	})
 }
+
+func deleteTodo(w http.ResponseWriter, r *http.Request){
+	id := strings.TrimSpace(chi.URLParam(r,"id"))
+
+	if !bson.IsObjectIdHex(id){
+		rnd.JSON(w, http.StatusBadRequest, renderer.M{
+			"message":"The id is invalid",
+		})
+		return 
+	}
+
+	if err:= db.C(collectionName).RemoveId(bson.ObjectIdHex(id)); err != nil {
+		rnd.JSON(w, http.StatusBadRequest, renderer.M{
+			"message":"Failed to delete todo",
+			"error":err,
+		})
+		return 
+	}
+	rnd.JSON(w, http.StatusOK, rendered.M{
+		"message":"Todo deleted successfully",
+	})
+}
+
+func updateTodo(w http.ResponseWriter, r *http.Request){
+	id := strings.TrimSpace(chi.URLParam(r,"id"))
+
+	if !bson.IsObjectIdHex(id){
+		rnd.JSON(w, http.StatusBadRequest, renderer.M{
+			"message": "The id is invalid",
+		})
+		return 
+	}
+	var t todo 
+
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		rnd.JSON(w, http.StatusBadRequest, err)
+		return 
+	}
+
+	if t.Title == ""{
+		rnd.JSON(w, http.StatusBadRequest,renderer.M{
+			"message":"The title field is required",
+		})
+		return 
+	}
+
+	if err := db.C(collectionName).Update(
+		bson.M{"_id": bson.ObjectIdHex(id)},
+		bson.M{"Title": t.Title, "completed":t.Completed},
+	); err != nil {
+		rnd.JSON(w, http.StatusBadRequest, rendered.M{
+			"message":"Failed to update todo",
+			"error":err,
+		})
+		return 
+	}
+
+}
 //main part deifne our main function
 func main(){
 
